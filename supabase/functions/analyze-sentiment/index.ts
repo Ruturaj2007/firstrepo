@@ -21,22 +21,22 @@ serve(async (req) => {
       });
     }
 
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    if (!OPENAI_API_KEY) {
-      return new Response(JSON.stringify({ error: "OPENAI_API_KEY not set in Supabase secrets." }), {
+    const DEPPSEEK_API_KEY = Deno.env.get("DEPPSEEEK_API_KEY"); // Changed to DEPPSEEK_API_KEY
+    if (!DEPPSEEK_API_KEY) {
+      return new Response(JSON.stringify({ error: "DEPPSEEK_API_KEY not set in Supabase secrets." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+    const deepseekResponse = await fetch("https://api.deepseek.com/v1/chat/completions", { // Changed API endpoint
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${DEPPSEEK_API_KEY}`, // Using DEPPSEEK_API_KEY
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo", // You can choose another suitable model like "gpt-4o-mini"
+        model: "deepseek-chat", // Changed model to DeepSeek's chat model
         messages: [
           { role: "system", content: "You are a sentiment analysis expert. Classify the following text as 'positive', 'negative', or 'neutral'. Respond with only one word: 'positive', 'negative', or 'neutral'." },
           { role: "user", content: text },
@@ -46,20 +46,20 @@ serve(async (req) => {
       }),
     });
 
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.json();
-      console.error("OpenAI API error:", errorData);
-      return new Response(JSON.stringify({ error: errorData.error?.message || "Failed to get sentiment from OpenAI." }), {
-        status: openaiResponse.status,
+    if (!deepseekResponse.ok) {
+      const errorData = await deepseekResponse.json();
+      console.error("DeepSeek API error:", errorData);
+      return new Response(JSON.stringify({ error: errorData.error?.message || "Failed to get sentiment from DeepSeek." }), {
+        status: deepseekResponse.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const data = await openaiResponse.json();
+    const data = await deepseekResponse.json();
     const sentiment = data.choices[0]?.message?.content?.toLowerCase().trim();
 
     if (!sentiment || !['positive', 'negative', 'neutral'].includes(sentiment)) {
-      console.warn("Unexpected sentiment response from OpenAI:", sentiment);
+      console.warn("Unexpected sentiment response from DeepSeek:", sentiment);
       return new Response(JSON.stringify({ sentiment: "unknown", rawResponse: data }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
