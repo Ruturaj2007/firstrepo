@@ -17,6 +17,9 @@ const Index = () => {
           <Link to="/saved-forms">
             <Button variant="outline" className="px-6 py-3 text-lg">View Saved Forms</Button>
           </Link>
+          <Link to="/form-definition-builder">
+            <Button variant="secondary" className="px-6 py-3 text-lg">Define New Form</Button>
+          </Link>
         </div>
       </div>
       <MadeWithDyad />
