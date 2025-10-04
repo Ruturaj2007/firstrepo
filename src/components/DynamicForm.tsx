@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"; // Import RadioGroup components
 import { toast } from "@/components/ui/use-toast";
 import { FormField } from "@/types/form";
 
@@ -100,6 +101,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
           }
           break;
         case "select":
+        case "radio": // Handle radio type similarly to select for schema
           fieldSchema = z.string();
           if (field.required) {
             fieldSchema = fieldSchema.min(1, `${field.label} is required`);
@@ -229,6 +231,23 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                           ))}
                         </SelectContent>
                       </Select>
+                    ) : field.type === "radio" && field.options ? ( // New radio group rendering
+                      <RadioGroup
+                        onValueChange={formField.onChange}
+                        defaultValue={formField.value}
+                        className="flex flex-col space-y-1"
+                      >
+                        {field.options.map((option) => (
+                          <FormItem key={option.value} className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value={String(option.value)} id={`${field.name}-${option.value}`} />
+                            </FormControl>
+                            <FormLabel htmlFor={`${field.name}-${option.value}`} className="font-normal">
+                              {option.label}
+                            </FormLabel>
+                          </FormItem>
+                        ))}
+                      </RadioGroup>
                     ) : (
                       <Input
                         type={field.type}

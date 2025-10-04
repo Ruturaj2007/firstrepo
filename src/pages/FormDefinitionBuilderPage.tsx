@@ -26,13 +26,13 @@ import { PlusCircle, Trash2, Edit, Save, ArrowLeft } from "lucide-react";
 const fieldSchema = z.object({
   name: z.string().min(1, "Field name is required"),
   label: z.string().min(1, "Field label is required"),
-  type: z.enum(["text", "email", "number", "textarea", "checkbox", "select"]),
+  type: z.enum(["text", "email", "number", "textarea", "checkbox", "select", "radio"]), // Added radio type
   placeholder: z.string().optional(),
   defaultValue: z.string().optional(),
   required: z.boolean().default(false),
   minLength: z.coerce.number().int().min(0).optional(),
   maxLength: z.coerce.number().int().min(0).optional(),
-  options: z.string().optional(), // Comma-separated string for select options
+  options: z.string().optional(), // Comma-separated string for select and radio options
   description: z.string().optional(),
 });
 
@@ -84,7 +84,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
       description: values.description || undefined,
     };
 
-    if (values.type === "select" && values.options) {
+    if ((values.type === "select" || values.type === "radio") && values.options) { // Handle options for radio
       newField.options = values.options.split(",").map((opt) => ({
         label: opt.trim(),
         value: opt.trim(),
@@ -116,7 +116,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
       minLength: fieldToEdit.minLength,
       maxLength: fieldToEdit.maxLength,
       options:
-        fieldToEdit.type === "select" && fieldToEdit.options
+        (fieldToEdit.type === "select" || fieldToEdit.type === "radio") && fieldToEdit.options // Handle options for radio
           ? fieldToEdit.options.map((opt) => opt.value).join(", ")
           : "",
       description: fieldToEdit.description || "",
@@ -239,6 +239,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
                   <SelectItem value="textarea">Textarea</SelectItem>
                   <SelectItem value="checkbox">Checkbox</SelectItem>
                   <SelectItem value="select">Select</SelectItem>
+                  <SelectItem value="radio">Radio Group</SelectItem> {/* Added radio type */}
                 </SelectContent>
               </Select>
               {form.formState.errors.type && (
@@ -269,7 +270,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
                 </div>
               </>
             )}
-            {selectedType === "select" && (
+            {(selectedType === "select" || selectedType === "radio") && ( // Show options for radio
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="options">Options (comma-separated, e.g., Option A, Option B)</Label>
                 <Input id="options" {...form.register("options")} />
