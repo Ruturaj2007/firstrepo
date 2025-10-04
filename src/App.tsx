@@ -7,22 +7,27 @@ import NotFound from "./pages/NotFound";
 import FormBuilderPage from "./pages/FormBuilderPage";
 import SavedFormsPage from "./pages/SavedFormsPage";
 import FormDefinitionBuilderPage from "./pages/FormDefinitionBuilderPage";
+import Login from "./pages/Login"; // Import the new Login page
+import { SessionContextProvider } from "./components/SessionContextProvider"; // Import the new SessionContextProvider
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Sonner /> {/* Using Sonner for all toasts */}
+      <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/form-builder" element={<FormBuilderPage />} />
-          <Route path="/saved-forms" element={<SavedFormsPage />} />
-          <Route path="/form-definition-builder" element={<FormDefinitionBuilderPage />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <SessionContextProvider> {/* Wrap routes with SessionContextProvider */}
+          <Routes>
+            <Route path="/login" element={<Login />} /> {/* Add login route */}
+            <Route path="/" element={<Index />} />
+            <Route path="/form-builder" element={<FormBuilderPage />} />
+            <Route path="/saved-forms" element={<SavedFormsPage />} />
+            <Route path="/form-definition-builder" element={<FormDefinitionBuilderPage />} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </SessionContextProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
