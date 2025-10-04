@@ -21,45 +21,49 @@ serve(async (req) => {
       });
     }
 
-    const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY"); // Corrected to DEEPSEEK_API_KEY
-    if (!DEEPSEEK_API_KEY) {
-      return new Response(JSON.stringify({ error: "DEEPSEEK_API_KEY not set in Supabase secrets." }), {
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      return new Response(JSON.stringify({ error: "GEMINI_API_KEY not set in Supabase secrets." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const deepseekResponse = await fetch("https://api.deepseek.com/v1/chat/completions", {
+    const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
-        messages: [
-          { role: "system", content: "You are a sentiment analysis expert. Classify the following text as 'positive', 'negative', or 'neutral'. Respond with only one word: 'positive', 'negative', or 'neutral'." },
-          { role: "user", content: text },
+        contents: [
+          {
+            parts: [
+              { text: "You are a sentiment analysis expert. Classify the following text as 'positive', 'negative', or 'neutral'. Respond with only one word: 'positive', 'negative', or 'neutral'." },
+              { text: text },
+            ],
+          },
         ],
-        max_tokens: 10,
-        temperature: 0,
+        generationConfig: {
+          maxOutputTokens: 10,
+          temperature: 0,
+        },
       }),
     });
 
-    if (!deepseekResponse.ok) {
-      const errorData = await deepseekResponse.json();
-      console.error("DeepSeek API error:", errorData);
-      return new Response(JSON.stringify({ error: errorData.error?.message || "Failed to get sentiment from DeepSeek." }), {
-        status: deepseekResponse.status,
+    if (!geminiResponse.ok) {
+      const errorData = await geminiResponse.json();
+      console.error("Gemini API error:", errorData);
+      return new Response(JSON.stringify({ error: errorData.error?.message || "Failed to get sentiment from Gemini." }), {
+        status: geminiResponse.status,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const data = await deepseekResponse.json();
-    const sentiment = data.choices[0]?.message?.content?.toLowerCase().trim();
+    const data = await geminiResponse.json();
+    const sentiment = data.candidates[0]?.content?.parts[0]?.text?.toLowerCase().trim();
 
     if (!sentiment || !['positive', 'negative', 'neutral'].includes(sentiment)) {
-      console.warn("Unexpected sentiment response from DeepSeek:", sentiment);
+      console.warn("Unexpected sentiment response from Gemini:", sentiment);
       return new Response(JSON.stringify({ sentiment: "unknown", rawResponse: data }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
