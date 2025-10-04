@@ -29,6 +29,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { showSuccess, showError } from "@/utils/toast"; // Using sonner toasts
 import { FormField } from "@/types/form";
 import { Loader2 } from "lucide-react";
+import { useSession } from "@/components/SessionContextProvider"; // Import useSession
 
 interface DynamicFormProps {
   fields: FormField[];
@@ -45,6 +46,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
 }) => {
   const [sentimentResults, setSentimentResults] = useState<Record<string, string | null>>({});
   const [isAnalyzing, setIsAnalyzing] = useState<Record<string, boolean>>({});
+  const { session } = useSession(); // Get the current session
 
   const schema = z.object(
     fields.reduce((acc, field) => {
@@ -202,6 +204,11 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
       return;
     }
 
+    if (!session) {
+      showError("You must be logged in to analyze sentiment.");
+      return;
+    }
+
     setIsAnalyzing((prev) => ({ ...prev, [fieldName]: true }));
     setSentimentResults((prev) => ({ ...prev, [fieldName]: null }));
 
@@ -212,6 +219,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`, // Pass the access token
         },
         body: JSON.stringify({ text }),
       });
@@ -261,7 +269,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                             <Button
                               type="button"
                               onClick={() => analyzeSentiment(field.name, formField.value)}
-                              disabled={isAnalyzing[field.name]}
+                              disabled={isAnalyzing[field.name] || !session} // Disable if not logged in
                               className="w-full"
                             >
                               {isAnalyzing[field.name] ? (
@@ -273,6 +281,9 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                                 "Analyze Sentiment"
                               )}
                             </Button>
+                            {!session && (
+                              <p className="text-sm text-red-500">Login to use sentiment analysis.</p>
+                            )}
                             {sentimentResults[field.name] && (
                               <p className="text-sm font-medium">
                                 Sentiment:{" "}

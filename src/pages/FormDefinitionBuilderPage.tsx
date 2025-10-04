@@ -22,6 +22,7 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 import { showSuccess, showError } from "@/utils/toast"; // Using sonner toasts
 import { PlusCircle, Trash2, Edit, Save, ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea"; // Import Textarea
+import { useSession } from "@/components/SessionContextProvider"; // Import useSession
 
 // Zod schema for a single form field in the builder
 const fieldSchema = z.object({
@@ -46,6 +47,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
   const [savedDefinitions, setSavedDefinitions] = useState<Record<string, FormField[]>>({});
   const [aiDescription, setAiDescription] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const { session } = useSession(); // Get the current session
 
   const form = useForm<FieldFormValues>({
     resolver: zodResolver(fieldSchema),
@@ -67,7 +69,8 @@ const FormDefinitionBuilderPage: React.FC = () => {
     try {
       const storedDefinitions = localStorage.getItem("formDefinitions");
       if (storedDefinitions) {
-        setSavedDefinitions(JSON.parse(storedDefinitions));
+        const parsedDefinitions: Record<string, FormField[]> = JSON.parse(storedDefinitions);
+        setSavedDefinitions(parsedDefinitions);
       }
     } catch (error) {
       console.error("Failed to load form definitions from localStorage:", error);
@@ -185,6 +188,11 @@ const FormDefinitionBuilderPage: React.FC = () => {
       return;
     }
 
+    if (!session) {
+      showError("You must be logged in to generate fields with AI.");
+      return;
+    }
+
     setIsGenerating(true);
     try {
       const SUPABASE_EDGE_FUNCTION_URL = "https://rixirvhezeiwsnromykx.supabase.co/functions/v1/generate-form-fields";
@@ -193,6 +201,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`, // Pass the access token
         },
         body: JSON.stringify({ description: aiDescription }),
       });
@@ -247,7 +256,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
               rows={4}
             />
           </div>
-          <Button onClick={generateFieldsWithAI} className="w-full" disabled={isGenerating}>
+          <Button onClick={generateFieldsWithAI} className="w-full" disabled={isGenerating || !session}>
             {isGenerating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -259,6 +268,9 @@ const FormDefinitionBuilderPage: React.FC = () => {
               </>
             )}
           </Button>
+          {!session && (
+            <p className="text-sm text-red-500 text-center">Login to use AI field generation.</p>
+          )}
         </CardContent>
       </Card>
 
