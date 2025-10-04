@@ -81,15 +81,11 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
           }
 
           if (field.required) {
-            // If required, it must be a valid number.
-            // z.coerce.number() converts "" to NaN.
-            // z.number() (implicitly added by pipe) will then reject NaN.
             fieldSchema = currentNumberSchema.pipe(z.number({
                 invalid_type_error: `${field.label} must be a number`,
                 required_error: `${field.label} is required`,
             }));
           } else {
-            // If not required, allow undefined/null, and transform NaN (from empty string) to undefined.
             fieldSchema = currentNumberSchema
               .optional()
               .transform((val) => (val === null || isNaN(val as number) ? undefined : val));
@@ -154,81 +150,104 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     }, {} as Record<string, any>),
   });
 
+  const saveFormDataToLocalStorage = (data: Record<string, any>) => {
+    try {
+      const timestamp = new Date().toISOString();
+      const savedForms = JSON.parse(localStorage.getItem("dynamicFormsData") || "[]");
+      savedForms.push({ data, timestamp, formTitle: formTitle || "Untitled Form" });
+      localStorage.setItem("dynamicFormsData", JSON.stringify(savedForms));
+      console.log("Form data saved to localStorage:", { data, timestamp });
+    } catch (error) {
+      console.error("Failed to save form data to localStorage:", error);
+      toast({
+        title: "Error saving form data",
+        description: "Could not save data to local storage.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = (data: z.infer<typeof schema>) => {
     onSubmit(data);
+    saveFormDataToLocalStorage(data);
     toast({
-      title: "Form Submitted!",
-      description: "Check the console for submitted data.",
+      title: "Form Submitted & Saved!",
+      description: "Your form data has been saved locally. Check the console for details.",
     });
+    form.reset(); // Optionally reset the form after successful submission
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-        {formTitle && <h2 className="text-2xl font-bold">{formTitle}</h2>}
-        {formDescription && <p className="text-muted-foreground">{formDescription}</p>}
-        {fields.map((field) => (
-          <ShadcnFormField
-            key={field.name}
-            control={form.control}
-            name={field.name}
-            render={({ field: formField }) => (
-              <FormItem>
-                <FormLabel>{field.label}</FormLabel>
-                <FormControl>
-                  {field.type === "textarea" ? (
-                    <Textarea
-                      placeholder={field.placeholder}
-                      {...formField}
-                      value={formField.value || ""}
-                    />
-                  ) : field.type === "checkbox" ? (
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        checked={formField.value}
-                        onCheckedChange={formField.onChange}
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 p-4 border rounded-lg shadow-sm bg-card">
+        {formTitle && <h2 className="text-2xl font-bold text-center mb-2">{formTitle}</h2>}
+        {formDescription && <p className="text-muted-foreground text-center mb-6">{formDescription}</p>}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {fields.map((field) => (
+            <ShadcnFormField
+              key={field.name}
+              control={form.control}
+              name={field.name}
+              render={({ field: formField }) => (
+                <FormItem className="space-y-2">
+                  <FormLabel>{field.label}</FormLabel>
+                  <FormControl>
+                    {field.type === "textarea" ? (
+                      <Textarea
+                        placeholder={field.placeholder}
+                        {...formField}
+                        value={formField.value || ""}
                       />
-                      <label
-                        htmlFor={field.name}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    ) : field.type === "checkbox" ? (
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={formField.value}
+                          onCheckedChange={formField.onChange}
+                          id={field.name}
+                        />
+                        <label
+                          htmlFor={field.name}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          {field.label}
+                        </label>
+                      </div>
+                    ) : field.type === "select" && field.options ? (
+                      <Select
+                        onValueChange={formField.onChange}
+                        defaultValue={formField.value}
                       >
-                        {field.label}
-                      </label>
-                    </div>
-                  ) : field.type === "select" && field.options ? (
-                    <Select
-                      onValueChange={formField.onChange}
-                      defaultValue={formField.value}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder={field.placeholder} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {field.options.map((option) => (
-                          <SelectItem key={option.value} value={String(option.value)}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <Input
-                      type={field.type}
-                      placeholder={field.placeholder}
-                      {...formField}
-                      value={formField.value || ""}
-                    />
+                        <SelectTrigger>
+                          <SelectValue placeholder={field.placeholder} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {field.options.map((option) => (
+                            <SelectItem key={option.value} value={String(option.value)}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        type={field.type}
+                        placeholder={field.placeholder}
+                        {...formField}
+                        value={formField.value || ""}
+                      />
+                    )}
+                  </FormControl>
+                  {field.description && (
+                    <FormDescription>{field.description}</FormDescription>
                   )}
-                </FormControl>
-                {field.description && (
-                  <FormDescription>{field.description}</FormDescription>
-                )}
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        ))}
-        <Button type="submit">Submit</Button>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+        </div>
+        <Button type="submit" className="w-full">Submit</Button>
       </form>
     </Form>
   );
