@@ -5,7 +5,8 @@ export type FormFieldType =
   | "textarea"
   | "checkbox"
   | "select"
-  | "radio"; // Added radio type
+  | "radio"
+  | "sentiment-text"; // Added sentiment-text type for NLP
 
 export interface FormField {
   name: string;

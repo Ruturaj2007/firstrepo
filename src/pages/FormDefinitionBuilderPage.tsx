@@ -26,7 +26,7 @@ import { PlusCircle, Trash2, Edit, Save, ArrowLeft } from "lucide-react";
 const fieldSchema = z.object({
   name: z.string().min(1, "Field name is required"),
   label: z.string().min(1, "Field label is required"),
-  type: z.enum(["text", "email", "number", "textarea", "checkbox", "select", "radio"]), // Added radio type
+  type: z.enum(["text", "email", "number", "textarea", "checkbox", "select", "radio", "sentiment-text"]), // Added sentiment-text type
   placeholder: z.string().optional(),
   defaultValue: z.string().optional(),
   required: z.boolean().default(false),
@@ -84,7 +84,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
       description: values.description || undefined,
     };
 
-    if ((values.type === "select" || values.type === "radio") && values.options) { // Handle options for radio
+    if ((values.type === "select" || values.type === "radio") && values.options) {
       newField.options = values.options.split(",").map((opt) => ({
         label: opt.trim(),
         value: opt.trim(),
@@ -116,7 +116,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
       minLength: fieldToEdit.minLength,
       maxLength: fieldToEdit.maxLength,
       options:
-        (fieldToEdit.type === "select" || fieldToEdit.type === "radio") && fieldToEdit.options // Handle options for radio
+        (fieldToEdit.type === "select" || fieldToEdit.type === "radio") && fieldToEdit.options
           ? fieldToEdit.options.map((opt) => opt.value).join(", ")
           : "",
       description: fieldToEdit.description || "",
@@ -239,7 +239,8 @@ const FormDefinitionBuilderPage: React.FC = () => {
                   <SelectItem value="textarea">Textarea</SelectItem>
                   <SelectItem value="checkbox">Checkbox</SelectItem>
                   <SelectItem value="select">Select</SelectItem>
-                  <SelectItem value="radio">Radio Group</SelectItem> {/* Added radio type */}
+                  <SelectItem value="radio">Radio Group</SelectItem>
+                  <SelectItem value="sentiment-text">Sentiment Text (NLP)</SelectItem> {/* Added sentiment-text type */}
                 </SelectContent>
               </Select>
               {form.formState.errors.type && (
@@ -270,7 +271,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
                 </div>
               </>
             )}
-            {(selectedType === "select" || selectedType === "radio") && ( // Show options for radio
+            {(selectedType === "select" || selectedType === "radio") && (
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="options">Options (comma-separated, e.g., Option A, Option B)</Label>
                 <Input id="options" {...form.register("options")} />
