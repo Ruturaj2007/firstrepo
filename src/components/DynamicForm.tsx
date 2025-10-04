@@ -74,13 +74,14 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
               message: `${field.label} is required`,
             });
           }
-          if (field.minLength) {
+          // For number type, minLength and maxLength should be interpreted as numeric min/max values
+          if (field.minLength !== undefined) {
             fieldSchema = fieldSchema.min(
               field.minLength,
               `${field.label} must be at least ${field.minLength}`,
             );
           }
-          if (field.maxLength) {
+          if (field.maxLength !== undefined) {
             fieldSchema = fieldSchema.max(
               field.maxLength,
               `${field.label} must be at most ${field.maxLength}`,
