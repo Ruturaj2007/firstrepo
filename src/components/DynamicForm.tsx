@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react"; // Import useState
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,9 +26,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { toast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/utils/toast"; // Using sonner toasts
 import { FormField } from "@/types/form";
-import { Loader2 } from "lucide-react"; // Import Loader2 icon
+import { Loader2 } from "lucide-react";
 
 interface DynamicFormProps {
   fields: FormField[];
@@ -106,7 +106,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
           break;
         case "select":
         case "radio":
-        case "sentiment-text": // Sentiment text also uses string validation
+        case "sentiment-text":
           fieldSchema = z.string();
           if (field.required) {
             fieldSchema = fieldSchema.min(1, `${field.label} is required`);
@@ -173,7 +173,6 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     try {
       const timestamp = new Date().toISOString();
       const savedForms = JSON.parse(localStorage.getItem("dynamicFormsData") || "[]");
-      // Include sentiment results if available
       const dataToSave = { ...data };
       for (const fieldName in sentimentResults) {
         if (sentimentResults[fieldName]) {
@@ -185,40 +184,28 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
       console.log("Form data saved to localStorage:", { data: dataToSave, timestamp });
     } catch (error) {
       console.error("Failed to save form data to localStorage:", error);
-      toast({
-        title: "Error saving form data",
-        description: "Could not save data to local storage.",
-        variant: "destructive",
-      });
+      showError("Could not save data to local storage.");
     }
   };
 
   const handleSubmit = (data: z.infer<typeof schema>) => {
     onSubmit(data);
     saveFormDataToLocalStorage(data);
-    toast({
-      title: "Form Submitted & Saved!",
-      description: "Your form data has been saved locally. Check the console for details.",
-    });
-    form.reset(); // Optionally reset the form after successful submission
-    setSentimentResults({}); // Clear sentiment results on form reset
+    showSuccess("Form Submitted & Saved! Your form data has been saved locally.");
+    form.reset();
+    setSentimentResults({});
   };
 
   const analyzeSentiment = async (fieldName: string, text: string) => {
     if (!text.trim()) {
-      toast({
-        title: "Input required",
-        description: "Please enter some text to analyze sentiment.",
-        variant: "destructive",
-      });
+      showError("Please enter some text to analyze sentiment.");
       return;
     }
 
     setIsAnalyzing((prev) => ({ ...prev, [fieldName]: true }));
-    setSentimentResults((prev) => ({ ...prev, [fieldName]: null })); // Clear previous result
+    setSentimentResults((prev) => ({ ...prev, [fieldName]: null }));
 
     try {
-      // Hardcoded URL for the Supabase Edge Function
       const SUPABASE_EDGE_FUNCTION_URL = "https://rixirvhezeiwsnromykx.supabase.co/functions/v1/analyze-sentiment";
 
       const response = await fetch(SUPABASE_EDGE_FUNCTION_URL, {
@@ -236,17 +223,10 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
 
       const data = await response.json();
       setSentimentResults((prev) => ({ ...prev, [fieldName]: data.sentiment }));
-      toast({
-        title: "Sentiment Analysis Complete",
-        description: `Sentiment for '${fieldName}': ${data.sentiment}`,
-      });
+      showSuccess(`Sentiment for '${fieldName}': ${data.sentiment}`);
     } catch (error: any) {
       console.error("Error analyzing sentiment:", error);
-      toast({
-        title: "Sentiment Analysis Failed",
-        description: error.message || "Could not analyze sentiment. Check console for details.",
-        variant: "destructive",
-      });
+      showError(error.message || "Could not analyze sentiment. Check console for details.");
       setSentimentResults((prev) => ({ ...prev, [fieldName]: "Error" }));
     } finally {
       setIsAnalyzing((prev) => ({ ...prev, [fieldName]: false }));
@@ -269,7 +249,7 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
                 <FormItem className="space-y-2">
                   <FormLabel>{field.label}</FormLabel>
                   <FormControl>
-                    {field.type === "textarea" || field.type === "sentiment-text" ? ( // Handle sentiment-text here
+                    {field.type === "textarea" || field.type === "sentiment-text" ? (
                       <div className="space-y-2">
                         <Textarea
                           placeholder={field.placeholder}

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { toast } from "@/components/ui/use-toast";
+import { showError } from "@/utils/toast"; // Using sonner toasts
 
 interface SavedFormDefinition {
   [key: string]: FormField[];
@@ -30,7 +30,6 @@ const FormBuilderPage: React.FC = () => {
       if (storedDefinitions) {
         const parsedDefinitions: SavedFormDefinition = JSON.parse(storedDefinitions);
         setAvailableDefinitions(parsedDefinitions);
-        // Optionally load the first definition if available
         const firstDefinitionName = Object.keys(parsedDefinitions)[0];
         if (firstDefinitionName) {
           setSelectedDefinitionName(firstDefinitionName);
@@ -39,11 +38,7 @@ const FormBuilderPage: React.FC = () => {
       }
     } catch (error) {
       console.error("Failed to load form definitions from localStorage:", error);
-      toast({
-        title: "Error loading definitions",
-        description: "Could not load form definitions from local storage.",
-        variant: "destructive",
-      });
+      showError("Could not load form definitions from local storage.");
     }
   }, []);
 
@@ -54,8 +49,6 @@ const FormBuilderPage: React.FC = () => {
 
   const handleFormSubmit = (data: Record<string, any>) => {
     console.log("Form data submitted:", data);
-    // The DynamicForm component already handles saving to localStorage and showing a toast.
-    // This function can be used for additional actions if needed.
   };
 
   return (

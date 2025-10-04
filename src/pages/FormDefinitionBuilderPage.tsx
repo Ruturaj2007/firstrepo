@@ -19,20 +19,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { FormField, FormFieldType } from "@/types/form";
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { toast } from "@/components/ui/use-toast";
+import { showSuccess, showError } from "@/utils/toast"; // Using sonner toasts
 import { PlusCircle, Trash2, Edit, Save, ArrowLeft } from "lucide-react";
 
 // Zod schema for a single form field in the builder
 const fieldSchema = z.object({
   name: z.string().min(1, "Field name is required"),
   label: z.string().min(1, "Field label is required"),
-  type: z.enum(["text", "email", "number", "textarea", "checkbox", "select", "radio", "sentiment-text"]), // Added sentiment-text type
+  type: z.enum(["text", "email", "number", "textarea", "checkbox", "select", "radio", "sentiment-text"]),
   placeholder: z.string().optional(),
   defaultValue: z.string().optional(),
   required: z.boolean().default(false),
   minLength: z.coerce.number().int().min(0).optional(),
   maxLength: z.coerce.number().int().min(0).optional(),
-  options: z.string().optional(), // Comma-separated string for select and radio options
+  options: z.string().optional(),
   description: z.string().optional(),
 });
 
@@ -96,10 +96,10 @@ const FormDefinitionBuilderPage: React.FC = () => {
       updatedFields[editingIndex] = newField;
       setFormFields(updatedFields);
       setEditingIndex(null);
-      toast({ title: "Field updated successfully!" });
+      showSuccess("Field updated successfully!");
     } else {
       setFormFields((prev) => [...prev, newField]);
-      toast({ title: "Field added successfully!" });
+      showSuccess("Field added successfully!");
     }
     form.reset();
   };
@@ -126,24 +126,16 @@ const FormDefinitionBuilderPage: React.FC = () => {
 
   const removeField = (index: number) => {
     setFormFields((prev) => prev.filter((_, i) => i !== index));
-    toast({ title: "Field removed." });
+    showSuccess("Field removed.");
   };
 
   const saveFormDefinition = () => {
     if (!formDefinitionName.trim()) {
-      toast({
-        title: "Error",
-        description: "Please provide a name for your form definition.",
-        variant: "destructive",
-      });
+      showError("Please provide a name for your form definition.");
       return;
     }
     if (formFields.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please add at least one field to save the form definition.",
-        variant: "destructive",
-      });
+      showError("Please add at least one field to save the form definition.");
       return;
     }
 
@@ -154,16 +146,12 @@ const FormDefinitionBuilderPage: React.FC = () => {
       };
       localStorage.setItem("formDefinitions", JSON.stringify(updatedDefinitions));
       setSavedDefinitions(updatedDefinitions);
-      toast({ title: `Form definition "${formDefinitionName}" saved!` });
-      setFormFields([]); // Clear current fields after saving
-      setFormDefinitionName(""); // Clear name
+      showSuccess(`Form definition "${formDefinitionName}" saved!`);
+      setFormFields([]);
+      setFormDefinitionName("");
     } catch (error) {
       console.error("Failed to save form definition to localStorage:", error);
-      toast({
-        title: "Error saving form definition",
-        description: "Could not save definition to local storage.",
-        variant: "destructive",
-      });
+      showError("Could not save definition to local storage.");
     }
   };
 
@@ -172,7 +160,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
     if (definition) {
       setFormFields(definition);
       setFormDefinitionName(name);
-      toast({ title: `Form definition "${name}" loaded!` });
+      showSuccess(`Form definition "${name}" loaded!`);
     }
   };
 
@@ -181,7 +169,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
     delete updatedDefinitions[name];
     localStorage.setItem("formDefinitions", JSON.stringify(updatedDefinitions));
     setSavedDefinitions(updatedDefinitions);
-    toast({ title: `Form definition "${name}" deleted.` });
+    showSuccess(`Form definition "${name}" deleted.`);
     if (formDefinitionName === name) {
       setFormFields([]);
       setFormDefinitionName("");
@@ -199,7 +187,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
           </Button>
         </Link>
         <h1 className="text-3xl font-bold text-center">Form Definition Builder</h1>
-        <div></div> {/* Placeholder for alignment */}
+        <div></div>
       </div>
 
       <Card className="mb-8 shadow-sm">
@@ -240,7 +228,7 @@ const FormDefinitionBuilderPage: React.FC = () => {
                   <SelectItem value="checkbox">Checkbox</SelectItem>
                   <SelectItem value="select">Select</SelectItem>
                   <SelectItem value="radio">Radio Group</SelectItem>
-                  <SelectItem value="sentiment-text">Sentiment Text (NLP)</SelectItem> {/* Added sentiment-text type */}
+                  <SelectItem value="sentiment-text">Sentiment Text (NLP)</SelectItem>
                 </SelectContent>
               </Select>
               {form.formState.errors.type && (
