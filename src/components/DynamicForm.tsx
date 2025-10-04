@@ -65,27 +65,34 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
           }
           break;
         case "number":
-          fieldSchema = z.coerce.number();
-          if (field.required) {
-            // For numbers, required means a value must be present.
-            // If 0 is a valid input, this might need adjustment.
-            // For now, assuming a non-empty number is required.
-            fieldSchema = fieldSchema.refine((val) => val !== null && val !== undefined, {
-              message: `${field.label} is required`,
-            });
-          }
-          // For number type, minLength and maxLength should be interpreted as numeric min/max values
+          let currentNumberSchema: z.ZodNumber = z.coerce.number();
+
           if (field.minLength !== undefined) {
-            fieldSchema = fieldSchema.min(
+            currentNumberSchema = currentNumberSchema.min(
               field.minLength,
               `${field.label} must be at least ${field.minLength}`,
             );
           }
           if (field.maxLength !== undefined) {
-            fieldSchema = fieldSchema.max(
+            currentNumberSchema = currentNumberSchema.max(
               field.maxLength,
               `${field.label} must be at most ${field.maxLength}`,
             );
+          }
+
+          if (field.required) {
+            // If required, it must be a valid number.
+            // z.coerce.number() converts "" to NaN.
+            // z.number() (implicitly added by pipe) will then reject NaN.
+            fieldSchema = currentNumberSchema.pipe(z.number({
+                invalid_type_error: `${field.label} must be a number`,
+                required_error: `${field.label} is required`,
+            }));
+          } else {
+            // If not required, allow undefined/null, and transform NaN (from empty string) to undefined.
+            fieldSchema = currentNumberSchema
+              .optional()
+              .transform((val) => (val === null || isNaN(val as number) ? undefined : val));
           }
           break;
         case "checkbox":
@@ -95,7 +102,6 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
               message: `${field.label} must be checked`,
             });
           }
-          // minLength and maxLength are not applicable for checkboxes
           break;
         case "select":
           fieldSchema = z.string();
