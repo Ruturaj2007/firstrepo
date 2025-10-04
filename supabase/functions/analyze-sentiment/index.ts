@@ -21,28 +21,28 @@ serve(async (req) => {
       });
     }
 
-    const DEPPSEEK_API_KEY = Deno.env.get("DEPPSEEEK_API_KEY"); // Changed to DEPPSEEK_API_KEY
-    if (!DEPPSEEK_API_KEY) {
-      return new Response(JSON.stringify({ error: "DEPPSEEK_API_KEY not set in Supabase secrets." }), {
+    const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY"); // Corrected to DEEPSEEK_API_KEY
+    if (!DEEPSEEK_API_KEY) {
+      return new Response(JSON.stringify({ error: "DEEPSEEK_API_KEY not set in Supabase secrets." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const deepseekResponse = await fetch("https://api.deepseek.com/v1/chat/completions", { // Changed API endpoint
+    const deepseekResponse = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${DEPPSEEK_API_KEY}`, // Using DEPPSEEK_API_KEY
+        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "deepseek-chat", // Changed model to DeepSeek's chat model
+        model: "deepseek-chat",
         messages: [
           { role: "system", content: "You are a sentiment analysis expert. Classify the following text as 'positive', 'negative', or 'neutral'. Respond with only one word: 'positive', 'negative', or 'neutral'." },
           { role: "user", content: text },
         ],
-        max_tokens: 10, // Keep response short
-        temperature: 0, // Make it deterministic
+        max_tokens: 10,
+        temperature: 0,
       }),
     });
 

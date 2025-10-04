@@ -20,9 +20,9 @@ serve(async (req) => {
       });
     }
 
-    const DEPPSEEK_API_KEY = Deno.env.get("DEPPSEEEK_API_KEY"); // Changed to DEPPSEEK_API_KEY
-    if (!DEPPSEEK_API_KEY) {
-      return new Response(JSON.stringify({ error: "DEPPSEEK_API_KEY not set in Supabase secrets." }), {
+    const DEEPSEEK_API_KEY = Deno.env.get("DEEPSEEK_API_KEY"); // Corrected to DEEPSEEK_API_KEY
+    if (!DEEPSEEK_API_KEY) {
+      return new Response(JSON.stringify({ error: "DEEPSEEK_API_KEY not set in Supabase secrets." }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -62,20 +62,20 @@ Respond with only the JSON array, no other text.
 User description: "${description}"
 `;
 
-    const deepseekResponse = await fetch("https://api.deepseek.com/v1/chat/completions", { // Changed API endpoint
+    const deepseekResponse = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${DEPPSEEK_API_KEY}`, // Using DEPPSEEK_API_KEY
+        "Authorization": `Bearer ${DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "deepseek-chat", // Changed model to DeepSeek's chat model
+        model: "deepseek-chat",
         messages: [
           { role: "system", content: prompt },
           { role: "user", content: description },
         ],
-        response_format: { type: "json_object" }, // Request JSON output
-        temperature: 0.7, // Allow some creativity
+        response_format: { type: "json_object" },
+        temperature: 0.7,
       }),
     });
 
