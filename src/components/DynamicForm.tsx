@@ -218,7 +218,10 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
     setSentimentResults((prev) => ({ ...prev, [fieldName]: null })); // Clear previous result
 
     try {
-      const response = await fetch("/api/analyze-sentiment", { // Assuming /api/analyze-sentiment maps to your Edge Function
+      // Hardcoded URL for the Supabase Edge Function
+      const SUPABASE_EDGE_FUNCTION_URL = "https://rixirvhezeiwsnromykx.supabase.co/functions/v1/analyze-sentiment";
+
+      const response = await fetch(SUPABASE_EDGE_FUNCTION_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
