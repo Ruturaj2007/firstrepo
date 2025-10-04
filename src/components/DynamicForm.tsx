@@ -48,38 +48,82 @@ const DynamicForm: React.FC<DynamicFormProps> = ({
       switch (field.type) {
         case "email":
           fieldSchema = z.string().email("Invalid email address");
+          if (field.required) {
+            fieldSchema = fieldSchema.min(1, `${field.label} is required`);
+          }
+          if (field.minLength) {
+            fieldSchema = fieldSchema.min(
+              field.minLength,
+              `${field.label} must be at least ${field.minLength} characters`,
+            );
+          }
+          if (field.maxLength) {
+            fieldSchema = fieldSchema.max(
+              field.maxLength,
+              `${field.label} must be at most ${field.maxLength} characters`,
+            );
+          }
           break;
         case "number":
           fieldSchema = z.coerce.number();
+          if (field.required) {
+            // For numbers, required means a value must be present.
+            // If 0 is a valid input, this might need adjustment.
+            // For now, assuming a non-empty number is required.
+            fieldSchema = fieldSchema.refine((val) => val !== null && val !== undefined, {
+              message: `${field.label} is required`,
+            });
+          }
+          if (field.minLength) {
+            fieldSchema = fieldSchema.min(
+              field.minLength,
+              `${field.label} must be at least ${field.minLength}`,
+            );
+          }
+          if (field.maxLength) {
+            fieldSchema = fieldSchema.max(
+              field.maxLength,
+              `${field.label} must be at most ${field.maxLength}`,
+            );
+          }
           break;
         case "checkbox":
           fieldSchema = z.boolean();
+          if (field.required) {
+            fieldSchema = fieldSchema.refine((val) => val === true, {
+              message: `${field.label} must be checked`,
+            });
+          }
+          // minLength and maxLength are not applicable for checkboxes
           break;
         case "select":
           fieldSchema = z.string();
+          if (field.required) {
+            fieldSchema = fieldSchema.min(1, `${field.label} is required`);
+          }
           break;
         case "text":
         case "textarea":
         default:
           fieldSchema = z.string();
+          if (field.required) {
+            fieldSchema = fieldSchema.min(1, `${field.label} is required`);
+          }
+          if (field.minLength) {
+            fieldSchema = fieldSchema.min(
+              field.minLength,
+              `${field.label} must be at least ${field.minLength} characters`,
+            );
+          }
+          if (field.maxLength) {
+            fieldSchema = fieldSchema.max(
+              field.maxLength,
+              `${field.label} must be at most ${field.maxLength} characters`,
+            );
+          }
           break;
       }
 
-      if (field.required) {
-        fieldSchema = fieldSchema.min(1, `${field.label} is required`);
-      }
-      if (field.minLength) {
-        fieldSchema = fieldSchema.min(
-          field.minLength,
-          `${field.label} must be at least ${field.minLength} characters`,
-        );
-      }
-      if (field.maxLength) {
-        fieldSchema = fieldSchema.max(
-          field.maxLength,
-          `${field.label} must be at most ${field.maxLength} characters`,
-        );
-      }
       if (field.pattern) {
         fieldSchema = fieldSchema.regex(
           field.pattern,
