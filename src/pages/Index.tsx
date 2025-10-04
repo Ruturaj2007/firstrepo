@@ -1,6 +1,6 @@
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { Link } from "react-router-dom"; // Import Link
-import { Button } from "@/components/ui/button"; // Import Button
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   return (
@@ -10,9 +10,14 @@ const Index = () => {
         <p className="text-xl text-gray-600 dark:text-gray-400 mb-8">
           Start building your amazing project here!
         </p>
-        <Link to="/form-builder">
-          <Button className="px-6 py-3 text-lg">Go to Dynamic Form Builder</Button>
-        </Link>
+        <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
+          <Link to="/form-builder">
+            <Button className="px-6 py-3 text-lg">Go to Dynamic Form Builder</Button>
+          </Link>
+          <Link to="/saved-forms">
+            <Button variant="outline" className="px-6 py-3 text-lg">View Saved Forms</Button>
+          </Link>
+        </div>
       </div>
       <MadeWithDyad />
     </div>
