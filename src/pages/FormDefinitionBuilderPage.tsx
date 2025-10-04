@@ -20,7 +20,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { FormField, FormFieldType } from "@/types/form";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { showSuccess, showError } from "@/utils/toast"; // Using sonner toasts
-import { PlusCircle, Trash2, Edit, Save, ArrowLeft } from "lucide-react";
+import { PlusCircle, Trash2, Edit, Save, ArrowLeft, Sparkles, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea"; // Import Textarea
 
 // Zod schema for a single form field in the builder
 const fieldSchema = z.object({
@@ -43,6 +44,8 @@ const FormDefinitionBuilderPage: React.FC = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [formDefinitionName, setFormDefinitionName] = useState<string>("");
   const [savedDefinitions, setSavedDefinitions] = useState<Record<string, FormField[]>>({});
+  const [aiDescription, setAiDescription] = useState<string>("");
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   const form = useForm<FieldFormValues>({
     resolver: zodResolver(fieldSchema),
@@ -176,6 +179,44 @@ const FormDefinitionBuilderPage: React.FC = () => {
     }
   };
 
+  const generateFieldsWithAI = async () => {
+    if (!aiDescription.trim()) {
+      showError("Please enter a description for the AI to generate fields.");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const SUPABASE_EDGE_FUNCTION_URL = "https://rixirvhezeiwsnromykx.supabase.co/functions/v1/generate-form-fields";
+
+      const response = await fetch(SUPABASE_EDGE_FUNCTION_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ description: aiDescription }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to generate form fields.");
+      }
+
+      const data = await response.json();
+      if (data.fields && Array.isArray(data.fields)) {
+        setFormFields(data.fields);
+        showSuccess("Form fields generated successfully with AI!");
+      } else {
+        throw new Error("AI did not return a valid array of form fields.");
+      }
+    } catch (error: any) {
+      console.error("Error generating fields with AI:", error);
+      showError(error.message || "Could not generate fields with AI. Check console for details.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const selectedType = form.watch("type");
 
   return (
@@ -192,7 +233,38 @@ const FormDefinitionBuilderPage: React.FC = () => {
 
       <Card className="mb-8 shadow-sm">
         <CardHeader>
-          <CardTitle>Define New Field</CardTitle>
+          <CardTitle>Generate Fields with AI</CardTitle>
+          <CardDescription>Describe the form you need, and AI will suggest fields.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="ai-description">Form Description</Label>
+            <Textarea
+              id="ai-description"
+              placeholder="e.g., 'A customer feedback form with name, email, a comment section for sentiment analysis, and a rating from 1 to 5.'"
+              value={aiDescription}
+              onChange={(e) => setAiDescription(e.target.value)}
+              rows={4}
+            />
+          </div>
+          <Button onClick={generateFieldsWithAI} className="w-full" disabled={isGenerating}>
+            {isGenerating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" /> Generate Fields with AI
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-8 shadow-sm">
+        <CardHeader>
+          <CardTitle>Define New Field Manually</CardTitle>
           <CardDescription>Add or edit properties for a form field.</CardDescription>
         </CardHeader>
         <CardContent>
